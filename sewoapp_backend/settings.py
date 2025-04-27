@@ -13,9 +13,7 @@ import environ
 import os
 from pathlib import Path
 
-env = environ.Env(
-    DEBUG=(bool, False)    
-)
+env = environ.Env()
 
 environ.Env.read_env()
 
@@ -110,6 +108,8 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+AUTH_USER_MODEL = 'sewoapp.User'
 
 
 # Internationalization
