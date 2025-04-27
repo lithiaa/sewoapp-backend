@@ -7,6 +7,7 @@ class User(AbstractUser):
         ('partner', 'Partner'),
         ('customer', 'Customer'),
     ]
+    email = models.EmailField(unique=True)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     address = models.TextField(blank=True, null=True)
@@ -14,6 +15,8 @@ class User(AbstractUser):
     id_card_number = models.CharField(max_length=20, blank=True, null=True)
     id_card_photo = models.URLField(blank=True, null=True)
     is_verified = models.BooleanField(default=False)
+    
+    REQUIRED_FIELDS = ['email', 'role']
     
 class Vehicle(models.Model):
     VEHICLE_TYPE_CHOICES = [
