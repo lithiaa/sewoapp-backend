@@ -1,4 +1,6 @@
 Django>=3.2,<4.0
 djangorestframework
 django-environ
-pip install drf-yasg
+psycopg2-binary
+drf-yasg
+qrcode
