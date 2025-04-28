@@ -1,5 +1,18 @@
 from rest_framework import serializers
-from .models import Vehicle, Booking, Payment, Review, QRCode
+from .models import User, Vehicle, Booking, Payment, Review, QRCode
+
+class UserSerializer(serializers.ModelSerializer):
+    # Menampilkan role dengan label (misalnya 'Partner' atau 'Customer')
+    role_display = serializers.CharField(source='get_role_display', read_only=True)
+
+    class Meta:
+        model = User
+        fields = [
+            'id', 'first_name', 'last_name', 'email', 'password', 'phone_number', 
+            'address', 'profile_picture', 'role', 'is_verified', 
+            'id_card_number', 'id_card_photo', 'created_at'
+        ]
+        read_only_fields = ('id', 'created_at')
 
 class VehicleSerializer(serializers.ModelSerializer):
     owner = serializers.StringRelatedField(read_only=True)  # Biar owner tampil sebagai username, bukan ID
