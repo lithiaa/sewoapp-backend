@@ -2,3 +2,5 @@
 docker-compose.yml
 settings.py
 README.Md
+__pycache__/
+migrations/
