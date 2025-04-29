@@ -115,7 +115,7 @@ class QRCode(models.Model):
     qr_code_image_url = models.TextField()
     is_scanned = models.BooleanField(default=False)
     scanned_at = models.DateTimeField(null=True, blank=True)
-    expired_at = models.DateTimeField(null=True, blank=True)  # opsional tambah expired
+    expired_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def generate_signature(self):
