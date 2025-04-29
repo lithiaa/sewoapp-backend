@@ -20,7 +20,7 @@ jobs:
         username: ${{ secrets.VM_USER }}
         key: ${{ secrets.VM_PRIVATE_KEY }}
         script: |
-          cd django-backend
+          cd sewoapp-backend
           git pull
           pip install -r requirements.txt
           python3 manage.py makemigrations
