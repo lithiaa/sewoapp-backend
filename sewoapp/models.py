@@ -1,7 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
-from django.utils import timezone
 import hashlib
 import hmac
 
@@ -15,7 +14,6 @@ class User(AbstractUser):
     
     first_name = models.CharField(max_length=30, blank=True, null=True)
     last_name = models.CharField(max_length=30, blank=True, null=True)
-    password = models.CharField(max_length=128)
     email = models.EmailField(unique=True)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
@@ -38,7 +36,7 @@ class Vehicle(models.Model):
     )
 
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='vehicles')
-    type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='car')
     brand = models.CharField(max_length=100)
     model = models.CharField(max_length=100)
     license_plate = models.CharField(max_length=20)
