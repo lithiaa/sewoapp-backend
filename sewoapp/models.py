@@ -24,7 +24,7 @@ class User(AbstractUser):
     id_card_number = models.CharField(max_length=20, blank=True, null=True)
     id_card_photo = models.URLField(blank=True, null=True)
     is_verified = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True, default=timezone.now)
+    created_at = models.DateTimeField(auto_now_add=True)
     
     REQUIRED_FIELDS = ['email', 'role']
 
