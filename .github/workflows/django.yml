@@ -27,4 +27,5 @@ jobs:
           python3 manage.py migrate
           python3 manage.py collectstatic --noinput
           sudo systemctl restart sewoapp_runserver
+          sudo systemctl status sewoapp_runserver
 

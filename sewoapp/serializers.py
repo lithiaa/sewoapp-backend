@@ -10,9 +10,9 @@ class UserSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'first_name', 'last_name', 'email', 'password', 'phone_number', 
             'address', 'profile_picture', 'role', 'role_display', 'is_verified', 
-            'id_card_number', 'id_card_photo', 'created_at'
+            'id_card_number', 'id_card_photo', 'date_joined'
         ]
-        read_only_fields = ('id', 'created_at')
+        read_only_fields = ('id', 'date_joined')
 
 
 class VehicleSerializer(serializers.ModelSerializer):
