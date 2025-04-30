@@ -4,3 +4,5 @@ django-environ
 psycopg2-binary
 drf-yasg
 qrcode
+channels
+channels-redis
