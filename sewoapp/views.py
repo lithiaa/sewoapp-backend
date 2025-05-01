@@ -1,15 +1,38 @@
-from rest_framework import viewsets, status
-from rest_framework.response import Response
-from .models import User, Vehicle, Booking, Payment, Review, QRCode
-from .serializers import UserSerializer, VehicleSerializer, BookingSerializer, PaymentSerializer, ReviewSerializer, QRCodeSerializer
-import qrcode
 from io import BytesIO
 import base64
+
+import qrcode
 from django.core.files.base import ContentFile
-from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from django.db.models import Q
+from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework import generics, permissions, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from .models import (
+    Booking,
+    Conversation,
+    Message,
+    Payment,
+    QRCode,
+    Review,
+    User,
+    Vehicle,
+)
+from .serializers import (
+    BookingSerializer,
+    ConversationSerializer,
+    MessageSerializer,
+    PaymentSerializer,
+    QRCodeSerializer,
+    ReviewSerializer,
+    UserSerializer,
+    VehicleSerializer,
+)
 
 # UserViewSet
 class UserViewSet(viewsets.ModelViewSet):
@@ -97,3 +120,112 @@ class ReviewViewSet(viewsets.ModelViewSet):
 class QRCodeViewSet(viewsets.ModelViewSet):
     queryset = QRCode.objects.all()
     serializer_class = QRCodeSerializer
+
+# Conservation and Message Views
+
+class ConversationListView(generics.ListAPIView):
+    serializer_class = ConversationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Hanya tampilkan conversation yang melibatkan user saat ini
+        return Conversation.objects.filter(
+            Q(booking__customer=self.request.user) |
+            Q(booking__vehicle__owner=self.request.user)
+        ).order_by('-updated_at')
+
+class ConversationDetailView(generics.RetrieveAPIView):
+    serializer_class = ConversationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        conversation = get_object_or_404(Conversation, id=self.kwargs['pk'])
+        
+        # Verifikasi partisipan conversation
+        if self.request.user not in [conversation.booking.customer, conversation.booking.vehicle.owner]:
+            raise PermissionDenied("Anda tidak memiliki akses ke percakapan ini")
+            
+        return conversation
+
+class MessageListView(generics.ListCreateAPIView):
+    serializer_class = MessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        conversation = get_object_or_404(Conversation, id=self.kwargs['conversation_id'])
+        
+        # Verifikasi partisipan conversation
+        if self.request.user not in [conversation.booking.customer, conversation.booking.vehicle.owner]:
+            raise PermissionDenied()
+            
+        return Message.objects.filter(conversation=conversation).order_by('timestamp')
+
+    def perform_create(self, serializer):
+        conversation = get_object_or_404(Conversation, id=self.kwargs['conversation_id'])
+        
+        # Verifikasi partisipan conversation
+        if self.request.user not in [conversation.booking.customer, conversation.booking.vehicle.owner]:
+            raise PermissionDenied()
+            
+        serializer.save(sender=self.request.user, conversation=conversation)
+
+class MessageDetailView(generics.RetrieveAPIView):
+    serializer_class = MessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        message = get_object_or_404(Message, id=self.kwargs['pk'])
+        
+        # Verifikasi partisipan conversation
+        if self.request.user not in [message.conversation.booking.customer, 
+                                   message.conversation.booking.vehicle.owner]:
+            raise PermissionDenied()
+            
+        return message
+
+class MarkMessagesAsReadView(generics.UpdateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def update(self, request, *args, **kwargs):
+        conversation = get_object_or_404(Conversation, id=kwargs['conversation_id'])
+        
+        # Verifikasi partisipan conversation
+        if request.user not in [conversation.booking.customer, conversation.booking.vehicle.owner]:
+            raise PermissionDenied()
+        
+        # Tandai pesan yang belum dibaca sebagai sudah dibaca
+        updated = Message.objects.filter(
+            conversation=conversation,
+            is_read=False
+        ).exclude(sender=request.user).update(is_read=True)
+        
+        return Response({
+            'status': 'success',
+            'messages_updated': updated
+        }, status=status.HTTP_200_OK)
+
+class StartConversationView(generics.CreateAPIView):
+    serializer_class = ConversationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        booking = get_object_or_404(Booking, id=request.data.get('booking_id'))
+        
+        # Verifikasi bahwa user adalah partisipan booking
+        if request.user not in [booking.customer, booking.vehicle.owner]:
+            raise PermissionDenied("Anda tidak memiliki akses ke booking ini")
+        
+        # Cek apakah conversation sudah ada
+        conversation, created = Conversation.objects.get_or_create(
+            booking=booking,
+            defaults={'booking': booking}
+        )
+        
+        serializer = self.get_serializer(conversation)
+        headers = self.get_success_headers(serializer.data)
+        
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+            headers=headers
+        )
