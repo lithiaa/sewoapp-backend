@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'sewoapp',
     'drf_yasg',
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -74,8 +75,18 @@ TEMPLATES = [
     },
 ]
 
+ASGI_APPLICATION = 'sewoapp_backend.asgi.application'
 WSGI_APPLICATION = 'sewoapp_backend.wsgi.application'
 
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
