@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Vehicle, Booking, Payment, Review, QRCode
+from .models import User, Vehicle, Booking, Payment, Review, QRCode, Conversation, Message
 
 class UserSerializer(serializers.ModelSerializer):
     # Menampilkan role dengan label (misalnya 'Partner' atau 'Customer')
@@ -76,3 +76,27 @@ class QRCodeSerializer(serializers.ModelSerializer):
             'is_scanned', 'scanned_at', 'expired_at', 'created_at'
         ]
         read_only_fields = ('id', 'booking', 'qr_code_data', 'qr_code_image_url', 'created_at')
+
+class MessageSerializer(serializers.ModelSerializer):
+    sender = UserSerializer(read_only=True)
+    
+    class Meta:
+        model = Message
+        fields = ['id', 'conversation', 'sender', 'content', 'timestamp', 'is_read']
+        read_only_fields = ['id', 'timestamp', 'sender']
+
+class ConversationSerializer(serializers.ModelSerializer):
+    messages = MessageSerializer(many=True, read_only=True)
+    customer = serializers.SerializerMethodField()
+    partner = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Conversation
+        fields = ['id', 'booking', 'customer', 'partner', 'messages', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
+    
+    def get_customer(self, obj):
+        return UserSerializer(obj.booking.customer).data
+    
+    def get_partner(self, obj):
+        return UserSerializer(obj.booking.vehicle.owner).data
